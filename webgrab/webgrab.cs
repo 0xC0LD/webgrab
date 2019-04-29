@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -277,7 +277,7 @@ namespace webgrab
             print(print_type.top, " +===[ ABOUT ]");
             print(print_type.top, " |", false); print(print_type.inf, " ABOUT....: web page file scanner / downloader");
             print(print_type.top, " |", false); print(print_type.inf, " BUILT IN.: C# .NET 4.6.1");
-            print(print_type.top, " |", false); print(print_type.inf, " Version..: 70");
+            print(print_type.top, " |", false); print(print_type.inf, " Version..: 71");
             print(print_type.top, " |", false); print(print_type.inf, " Author...: 0xC0LD");
             print(print_type.top, " |", false); print(print_type.inf, " USAGE....: webgrab.exe <webpage url / RO> <switch1,sw2,sw3,sw4,...>");
             print(print_type.def, "");
@@ -291,50 +291,50 @@ namespace webgrab
             print(print_type.def, "");
             print(print_type.top, " +===[ RULES / SWITCHES ]");
             print(print_type.top, " |", false); print(print_type.top, " +==[DOWNLOAD RULES]");
-            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " +valid         = only download valid URI addresses");
+            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " @valid         = only download valid URI addresses");
             print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " -<type/name>   = ignore (ex. -thumb.jpg)");
-            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " +replace       = if file exists, replace the file...");
-            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " +skip          = if file exists, skip the url...");
-            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, "   +skip_find   = search for the file in subdirectories and if it exists skip it");
-            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, "   +skip_file   = make your own *.webgrab_skip file(s) that contain filenames (each on every line) to skip...");
-            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, "   +skip_ext    = ignore extensions when comparing filenames");
-            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, "   +skip_case   = ignore case when comparing filenames");
-            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, "   +skip_output = test existence of file before output (useful if you use --out/--test/...)");
-            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, "   +skip_all    = +skip,+skip_find,+skip_file,+skip_ext,+skip_case,+skip_output");
-            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " +nodupes       = dispose duplicate URL(s)...");
-            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " +agent         = add User-Agent to request header (403 error fix)");
+            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " @replace       = if file exists, replace the file...");
+            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " @skip          = if file exists, skip the url...");
+            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, "   @skip_find   = search for the file in subdirectories and if it exists skip it");
+            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, "   @skip_file   = make your own *.webgrab_skip file(s) that contain filenames (each on every line) to skip...");
+            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, "   @skip_ext    = ignore extensions when comparing filenames");
+            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, "   @skip_case   = ignore case when comparing filenames");
+            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, "   @skip_output = test existence of file before output (useful if you use --out/--test/...)");
+            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, "   @skip_all    = @skip,@skip_find,@skip_file,@skip_ext,@skip_case,@skip_output");
+            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " @nodupes       = dispose duplicate URL(s)...");
+            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " @agent         = add User-Agent to request header (403 error fix)");
             print(print_type.top, " |");
             print(print_type.top, " |", false); print(print_type.top, " +=[DISPLAY RULES]");
-            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " +compact  = only print numbers (on a single line)");
-            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " +clean    = don't print errors, (only successful downloads (DLED))");
-            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " +count    = count items");
-            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " +verbose  = print current progress on key press... with --out print debug... (++count)");
-            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " +filename = for --out, only print filename(s)");
-            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " +color    = use colors in output");
+            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " @compact  = only print numbers (on a single line)");
+            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " @clean    = don't print errors, (only successful downloads (DLED))");
+            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " @count    = count items");
+            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " @verbose  = print current progress on key press... with --out print debug... (+@count)");
+            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " @filename = for --out, only print filename(s)");
+            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " @color    = use colors in output");
             print(print_type.top, " |");
             print(print_type.top, " |", false); print(print_type.top, " +==[FILE RULES]");
-            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " +media = +video,+image,+other");
-            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " +grab  = +clean,+color,+count,+valid,+media,-thumb ");
-            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " +video = ", false); foreach (string type in TYPES_VIDEO) { if (type == TYPES_VIDEO[TYPES_VIDEO.Count - 1]) { print(print_type.inf, "~" + type, false); } else { print(print_type.inf, "~" + type + ",", false); } }
+            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " @media = @video,@image,@other");
+            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " @grab  = @clean,@color,@count,@valid,@media,-thumb ");
+            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " @video = ", false); foreach (string type in TYPES_VIDEO) { if (type == TYPES_VIDEO[TYPES_VIDEO.Count - 1]) { print(print_type.inf, "~" + type, false); } else { print(print_type.inf, "~" + type + ",", false); } }
             print(print_type.def, "");
-            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " +image = ", false); foreach (string type in TYPES_IMAGE) { if (type == TYPES_IMAGE[TYPES_IMAGE.Count - 1]) { print(print_type.inf, "~" + type, false); } else { print(print_type.inf, "~" + type + ",", false); } }
+            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " @image = ", false); foreach (string type in TYPES_IMAGE) { if (type == TYPES_IMAGE[TYPES_IMAGE.Count - 1]) { print(print_type.inf, "~" + type, false); } else { print(print_type.inf, "~" + type + ",", false); } }
             print(print_type.def, "");
-            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " +other = ", false); foreach (string type in TYPES_OTHER) { if (type == TYPES_OTHER[TYPES_OTHER.Count - 1]) { print(print_type.inf, "~" + type, false); } else { print(print_type.inf, "~" + type + ",", false); } }
+            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " @other = ", false); foreach (string type in TYPES_OTHER) { if (type == TYPES_OTHER[TYPES_OTHER.Count - 1]) { print(print_type.inf, "~" + type, false); } else { print(print_type.inf, "~" + type + ",", false); } }
             print(print_type.def, "");
-            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " +codec = ", false); foreach (string type in TYPES_CODEC) { if (type == TYPES_CODEC[TYPES_CODEC.Count - 1]) { print(print_type.inf, "~" + type, false); } else { print(print_type.inf, "~" + type + ",", false); } }
+            print(print_type.top, " |", false); print(print_type.top, " |", false); print(print_type.inf, " @codec = ", false); foreach (string type in TYPES_CODEC) { if (type == TYPES_CODEC[TYPES_CODEC.Count - 1]) { print(print_type.inf, "~" + type, false); } else { print(print_type.inf, "~" + type + ",", false); } }
             print(print_type.def, "");
             print(print_type.def, "");
             print(print_type.top, " +===[ MORE INFO / EXAMPLES ]");
             print(print_type.top, " |", false); print(print_type.inf, " - if skip and replace are specified, file download will be skipped...");
             print(print_type.top, " |", false); print(print_type.inf, "");
-            print(print_type.top, " |", false); print(print_type.inf, " > webgrab <url> +rule,keyword,-keyword,~keyword");
-            print(print_type.top, " |", false); print(print_type.inf, "      +rule     = download rule / variable");
+            print(print_type.top, " |", false); print(print_type.inf, " > webgrab <url> @rule,keyword,-keyword,~keyword");
+            print(print_type.top, " |", false); print(print_type.inf, "      @rule     = download rule / variable");
             print(print_type.top, " |", false); print(print_type.inf, "      keyword   = keyword that must be present");
             print(print_type.top, " |", false); print(print_type.inf, "      -keyword  = keyword that must NOT be present");
             print(print_type.top, " |", false); print(print_type.inf, "      ~keyword  = keyword that should / could be present");
             print(print_type.top, " |", false); print(print_type.inf, "");
-            print(print_type.top, " |", false); print(print_type.inf, " > webgrab.exe <url> +clean,.jpg");
-            print(print_type.top, " |", false); print(print_type.inf, " > webgrab.exe --list \"webgrab.exe \\\"https://some_website.net/$$$$$\\\" +grab,+clean\" 1 30000 > download.bat");
+            print(print_type.top, " |", false); print(print_type.inf, " > webgrab.exe <url> @clean,.jpg");
+            print(print_type.top, " |", false); print(print_type.inf, " > webgrab.exe --list \"webgrab.exe \\\"https://some_website.net/$$$$$\\\" @grab,@clean\" 1 30000 > download.bat");
             print(print_type.def, "");
         }
 
@@ -389,7 +389,7 @@ namespace webgrab
             {
                 if (string.IsNullOrEmpty(item)) { continue; }
 
-                if (item.StartsWith("+"))
+                if (item.StartsWith("@"))
                 {
                     switch (item.Remove(0, 1))
                     {
@@ -432,7 +432,7 @@ namespace webgrab
                         case "other": only_bool = true; foreach (string type in TYPES_OTHER) { only.Add(type); } break;
                         case "codec": only_bool = true; foreach (string type in TYPES_CODEC) { only.Add(type); } break;
 
-                        case "grab": //+clean,+color,+count,+valid,+media,-thumb
+                        case "grab":
                             {
                                 CLEAN = true;
                                 COLOR = true;
