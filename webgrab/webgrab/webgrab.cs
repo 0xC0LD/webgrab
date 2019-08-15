@@ -24,10 +24,10 @@ namespace webgrab
         private static bool SKIP_OUTPUT = false;
         private static bool NODUPES     = false;
         //display
-        private static bool COMPACT  = false; private static Thread print_info_th_compact = new Thread(print_info_thread_compact);
+        private static bool COMPACT  = false; private static Thread print_info_th_compact = new Thread(print_info_thread_compact) { IsBackground = true };
         private static bool CLEAN    = false;
         private static bool COUNT    = false; 
-        private static bool VERBOSE  = false; private static Thread print_info_th = new Thread(print_info_thread);
+        private static bool VERBOSE  = false; private static Thread print_info_th = new Thread(print_info_thread) { IsBackground = true };
         private static bool FILENAME = false;
         private static bool COLOR    = false;
 
@@ -83,6 +83,7 @@ namespace webgrab
             //if application has just ran (no args)
             if (args.Length == 0) { print_help(); return 1; }
 
+            //RO
             switch (args[0])
             {
                 case "/?":
@@ -91,10 +92,6 @@ namespace webgrab
                 case "help":
                 case "-help":
                 case "--help": { print_help(args); return 0; /*break*/  }
-
-                case "list":
-                case "-list":
-                case "--list": { return lst_gen(args); /*break*/ }
 
                 case "echo":
                 case "-echo":
@@ -107,14 +104,14 @@ namespace webgrab
                 case "--output":
                 case "out":
                 case "-out":
-                case "--out": { return out_urls(args); /*break*/  }
+                case "--out": { return RunOption_outUrls(args); /*break*/  }
 
                 case "watch":
                 case "-watch":
                 case "--watch":
                 case "listen":
                 case "-listen":
-                case "--listen": { return listen(args); /*break*/  }
+                case "--listen": { return RunOption_listen(args); /*break*/  }
 
                 case "ping":
                 case "-ping":
@@ -124,8 +121,8 @@ namespace webgrab
                 case "--try":
                 case "test":
                 case "-test":
-                case "--test": { return test_website(args); /*break*/ }
-
+                case "--test": { return RunOption_testWebsite(args); /*break*/ }
+                    
                 case "read":
                 case "-read":
                 case "--read":
@@ -134,77 +131,65 @@ namespace webgrab
                 case "--txt":
                 case "text":
                 case "-text":
-                case "--text": { return read(args); /*break*/ }
+                case "--text": { return RunOption_read(args); /*break*/ }
             }
-
-            string URL_ = args[0];
-
-            //CHECK URL
-            if (!url_is_valid_main(URL_)) { return 1; }
-
-            Uri URL = new Uri(URL_);
-            byte[] html = null;
 
             //IF THERE ARE 2 ARGS GET OPTIONS
             if (args.Length == 2) { get_options(args[1]); }
 
+            string input = args[0];
+            byte[] html = null;
+
             //IF URL==FILE just download and quit
-            foreach (string type in TYPES_VIDEO) { if (args[0].Contains(type)) { return wc_dl(args[0]); } }
-            foreach (string type in TYPES_IMAGE) { if (args[0].Contains(type)) { return wc_dl(args[0]); } }
-            foreach (string type in TYPES_OTHER) { if (args[0].Contains(type)) { return wc_dl(args[0]); } }
+            foreach (string type in TYPES_VIDEO) { if (input.Contains(type)) { return wc_dl(args[0]); } }
+            foreach (string type in TYPES_IMAGE) { if (input.Contains(type)) { return wc_dl(args[0]); } }
+            foreach (string type in TYPES_OTHER) { if (input.Contains(type)) { return wc_dl(args[0]); } }
 
-
-            if (VERBOSE && !COMPACT)
+            int check = check_URLorFILE(input);
+            switch (check)
             {
-                //start info thread
-                print_info_th.IsBackground = true;
-                print_info_th.Start();
+                case 0:
+                default: return 1;
+
+                case 1: {
+                    /**
+                    *** DOWNLOAD HTML
+                    **/
+                    print(print_type.def, "");
+                    print(print_type.top, "===[ DOWNLOADING HTML ]");
+                    print(print_type.cur, "DING..: " + input + " ", false); //ONE LINE
+
+                    try { html = wc.DownloadData(new Uri(input)); }
+                    catch (System.Net.WebException e)       { print(print_type.cer, "ERR[WebException] "           + e.Message, true, true); return returnStatusCode(e); }
+                    catch (System.ArgumentNullException e)  { print(print_type.cer, "ERR[ArgumentNullException] "  + e.Message, true, true); return e.HResult;           }
+                    catch (System.NullReferenceException e) { print(print_type.cer, "ERR[NullReferenceException] " + e.Message, true, true); return e.HResult;           }
+                    catch (System.Exception e)              { print(print_type.cer, "ERR[UNK] "                    + e.Message, true, true); return e.HResult;           }
+                    print(print_type.def, ""); //ENDLINE (or with an error)
+
+                    print(print_type.pri, "DLED..: " + ROund(html.Length) + " (" + html.Length + " bytes)");
+                    break;
+                }
+                case 2: html = File.ReadAllBytes(input); break;
             }
-
-            /**
-            *** DOWNLOAD HTML
-            **/
-            print(print_type.def, "");
-            print(print_type.top, "===[ DOWNLOADING HTML ]");
-            print(print_type.cur, "DING..: " + URL.ToString() + " ", false); //ONE LINE
-
-            if (COMPACT)
-            {
-                print_info_th_compact.IsBackground = true;
-                print_info_th_compact.Start();
-            }
-
-            try
-            {
-                html = wc.DownloadData(URL); //DOWNLOAD
-            }
-            catch (System.Net.WebException e)
-            {
-                print(print_type.err, "ERR[WebException] " + e.Message, true, true);
-
-                
-                //return WebException error code
-                return e.HResult;
-            }
-            catch (System.ArgumentNullException e)  { print(print_type.err, "ERR[ArgumentNullException] "  + e.Message, true, true); return e.HResult; }
-            catch (System.NullReferenceException e) { print(print_type.err, "ERR[NullReferenceException] " + e.Message, true, true); return e.HResult; }
-            catch (System.Exception e)              { print(print_type.err, "ERR[UNK] "                    + e.Message, true, true); return e.HResult; }
-            print(print_type.def, ""); //ENDLINE (or with an error)
-
-            print(print_type.pri, "DLED..: " + ROund(html.Length) + " (" + html.Length + " bytes)");
             
+            if (VERBOSE && !COMPACT) { print_info_th.Start(); }
+            if (COMPACT) { print_info_th_compact.Start(); }
+
             /**
             *** HTML SCAN (CLEAN UP)
             **/
             print(print_type.def, "");
             print(print_type.top, "===[ SCANNING HTML ]");
             print(print_type.inf, "title from html.: " + get_html_title(html)); //GET TITLE
-            List<string> html_all = get_html_all(URL, html); //HTML SCAN
+            List<string> html_all = get_html_all(check == 1 ? input : null, html); //HTML SCAN
             print(print_type.inf, "total items ....: " + count_total);
             List<string> accepted_items = new List<string>(); //CLEAN/REMOVE ITEMS BY RULES
             foreach (string str in html_all) { if (url_is_valid(str)) { accepted_items.Add(str); } }
             print(print_type.inf, "accepted items..: " + count_accepted);
-
+            
+            /**
+            *** DOWNLOAD FOUND URLS
+            **/
             print(print_type.def, "");
             print(print_type.top, "===[ DOWNLOADING ]");
             foreach (string l in accepted_items) { wc_dl(l); }
@@ -236,13 +221,14 @@ namespace webgrab
             pri, //priority, downloaded, dled
 
             war, //warning
-            eri, //error info (standard output)
-            err  //error      (error output)
+            eri, //error info (standard output) (ERROR COUNTS)
+            err, //error      (error output)
+            cer  //critical error
         }
-        private static void print(print_type type, string text, bool new_line = true, bool compact_ = false)
+        private static void print(print_type type, string text, bool new_line = true, bool iamCompact = false)
         {
             //compact logic
-            if (COMPACT == true && compact_ == false) { return; }
+            if (COMPACT == true && iamCompact == false && type != print_type.cer) { return; }
             
             ConsoleColor default_color = Console.ForegroundColor; //set past color
             ConsoleColor fcolor = Console.ForegroundColor;
@@ -250,21 +236,27 @@ namespace webgrab
             /* COLOR START */
             if (COLOR)
             {
-                if (type == print_type.def) { fcolor = ConsoleColor.Gray; }
-                if (type == print_type.inf) { fcolor = ConsoleColor.DarkYellow; }
-                if (type == print_type.top) { fcolor = ConsoleColor.DarkCyan; }
-                if (type == print_type.unk) { fcolor = ConsoleColor.Cyan; }
-                if (type == print_type.cur) { fcolor = ConsoleColor.DarkGreen; }
-                if (type == print_type.pri) { fcolor = ConsoleColor.Green; }
-                if (type == print_type.war) { fcolor = ConsoleColor.Yellow; }
-                if (type == print_type.err) { fcolor = ConsoleColor.Red; }
-                if (type == print_type.eri) { fcolor = ConsoleColor.Red; }
-                
+                switch (type)
+                {
+                    case print_type.def: default: fcolor = ConsoleColor.Gray; break;
+                    case print_type.inf: fcolor = ConsoleColor.DarkYellow;    break;
+                    case print_type.top: fcolor = ConsoleColor.DarkCyan;      break;
+                    case print_type.unk: fcolor = ConsoleColor.Cyan;          break;
+                    case print_type.cur: fcolor = ConsoleColor.DarkGreen;     break;
+                    case print_type.pri: fcolor = ConsoleColor.Green;         break;
+                    case print_type.war: fcolor = ConsoleColor.Yellow;        break;
+                    case print_type.eri: fcolor = ConsoleColor.Red;           break;
+                    case print_type.err: fcolor = ConsoleColor.Red;           break;
+                    case print_type.cer: fcolor = ConsoleColor.Red;           break;
+                }
+
                 Console.ForegroundColor = fcolor;
             }
             
-            if (type == print_type.err) { if (new_line) { Console.Error.WriteLine(text); } else { Console.Error.Write(text); } }
-            else                        { if (new_line) { Console.WriteLine(text);       } else { Console.Write(text);       } }
+            if (type == print_type.err || type == print_type.cer)
+            { if (new_line) { Console.Error.WriteLine(text); } else { Console.Error.Write(text); } }
+            else
+            { if (new_line) { Console.WriteLine(text);       } else { Console.Write(text);       } }
 
             /* COLOR END */
             if (COLOR) { Console.ForegroundColor = default_color; }
@@ -277,16 +269,16 @@ namespace webgrab
             print(print_type.top, " +===[ ABOUT ]");
             print(print_type.top, " |", false); print(print_type.inf, " ABOUT....: web page file scanner / downloader");
             print(print_type.top, " |", false); print(print_type.inf, " BUILT IN.: C# .NET 4.6.1");
-            print(print_type.top, " |", false); print(print_type.inf, " Version..: 72");
+            print(print_type.top, " |", false); print(print_type.inf, " Version..: 73");
             print(print_type.top, " |", false); print(print_type.inf, " Author...: 0xC0LD");
-            print(print_type.top, " |", false); print(print_type.inf, " USAGE....: webgrab.exe <webpage url / RO> <switch1,sw2,sw3,sw4,...>");
+            print(print_type.top, " |", false); print(print_type.inf, " USAGE....: webgrab.exe <webpage url / file.html / RO> <switch1,sw2,sw3,sw4,...>");
             print(print_type.def, "");
             print(print_type.top, " +===[ RUN OPTIONS (RO) ]");
-            print(print_type.top, " |", false); print(print_type.inf, " --help \"switch1,sw2,sw3,sw4,...\"                         = shows this (help)");
-            print(print_type.top, " |", false); print(print_type.inf, " --out \"webpage url\" \"switch1,sw2,sw3,sw4,...\"            = no downloading, only output URL(s)");
-            print(print_type.top, " |", false); print(print_type.inf, " --test \"webpage url\" \"switch1,sw2,sw3,sw4,...\"           = no downloading, just test the website");
-            print(print_type.top, " |", false); print(print_type.inf, " --read \"file_with_urls.txt\" \"switch1,sw2,sw3,sw4,...\"    = read a .txt file and treat every line as an URL, then download them");
-            print(print_type.top, " |", false); print(print_type.inf, " --watch \"switch1,sw2,sw3,sw4,...\"                        = download copied (clipboard) URL(s)");
+            print(print_type.top, " |", false); print(print_type.inf, " --help \"switch1,sw2,sw3,sw4,...\"                           = shows this (help)");
+            print(print_type.top, " |", false); print(print_type.inf, " --out \"webpage url / file.html\" \"switch1,sw2,sw3,sw4,...\"  = no downloading, only output URL(s)");
+            print(print_type.top, " |", false); print(print_type.inf, " --test \"webpage url / file.html\" \"switch1,sw2,sw3,sw4,...\" = no downloading, just print counts");
+            print(print_type.top, " |", false); print(print_type.inf, " --read \"file_with_urls.txt\" \"switch1,sw2,sw3,sw4,...\"      = read a .txt file and treat every line as an URL, then download them");
+            print(print_type.top, " |", false); print(print_type.inf, " --watch \"switch1,sw2,sw3,sw4,...\"                          = download copied (clipboard) URL(s)");
             print(print_type.def, "");
             print(print_type.top, " +===[ RULES / SWITCHES ]");
             print(print_type.top, " |", false); print(print_type.top, " +==[DOWNLOAD RULES]");
@@ -511,76 +503,24 @@ namespace webgrab
             count_accepted++;
             return true;
         }
-        private static bool url_is_valid_main(string url)
+        private static int check_URLorFILE(string input)
         {
-            //check if empty
-            if (string.IsNullOrEmpty(url)) { print(print_type.err, "input is blank." + url, true, true); return false; }
-
-            //check syntax
-            if (!Uri.IsWellFormedUriString(url, UriKind.Absolute)) { print(print_type.err, "not an url: " + url, true, true); return false; }
-
-            // //check for error codes
-            // if (VERBOSE)
-            // {
-            //     try
-            //     {
-            //         HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
-            //         HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-            // 
-            //         if (response.StatusCode == HttpStatusCode.Continue                    ) { printf(print_type.err, "Url returned: 100 (Continue)");                     }
-            //         if (response.StatusCode == HttpStatusCode.SwitchingProtocols          ) { printf(print_type.err, "Url returned: 101 (SwitchingProtocols)");           }
-            //         if (response.StatusCode == HttpStatusCode.OK                          ) { printf(print_type.err, "Url returned: 200 (OK)");                           }
-            //         if (response.StatusCode == HttpStatusCode.Created                     ) { printf(print_type.err, "Url returned: 201 (Created)");                      }
-            //         if (response.StatusCode == HttpStatusCode.Accepted                    ) { printf(print_type.err, "Url returned: 202 (Accepted)");                     }
-            //         if (response.StatusCode == HttpStatusCode.NonAuthoritativeInformation ) { printf(print_type.err, "Url returned: 203 (NonAuthoritativeInformation)");  }
-            //         if (response.StatusCode == HttpStatusCode.NoContent                   ) { printf(print_type.err, "Url returned: 204 (NoContent)");                    }
-            //         if (response.StatusCode == HttpStatusCode.ResetContent                ) { printf(print_type.err, "Url returned: 205 (ResetContent)");                 }
-            //         if (response.StatusCode == HttpStatusCode.PartialContent              ) { printf(print_type.err, "Url returned: 206 (PartialContent)");               }
-            //         if (response.StatusCode == HttpStatusCode.MultipleChoices             ) { printf(print_type.err, "Url returned: 300 (MultipleChoices)");              }
-            //         if (response.StatusCode == HttpStatusCode.Ambiguous                   ) { printf(print_type.err, "Url returned: 300 (Ambiguous)");                    }
-            //         if (response.StatusCode == HttpStatusCode.MovedPermanently            ) { printf(print_type.err, "Url returned: 301 (MovedPermanently)");             }
-            //         if (response.StatusCode == HttpStatusCode.Moved                       ) { printf(print_type.err, "Url returned: 301 (Moved)");                        }
-            //         if (response.StatusCode == HttpStatusCode.Found                       ) { printf(print_type.err, "Url returned: 302 (Found)");                        }
-            //         if (response.StatusCode == HttpStatusCode.Redirect                    ) { printf(print_type.err, "Url returned: 302 (Redirect)");                     }
-            //         if (response.StatusCode == HttpStatusCode.SeeOther                    ) { printf(print_type.err, "Url returned: 303 (SeeOther)");                     }
-            //         if (response.StatusCode == HttpStatusCode.RedirectMethod              ) { printf(print_type.err, "Url returned: 303 (RedirectMethod)");               }
-            //         if (response.StatusCode == HttpStatusCode.NotModified                 ) { printf(print_type.err, "Url returned: 304 (NotModified)");                  }
-            //         if (response.StatusCode == HttpStatusCode.UseProxy                    ) { printf(print_type.err, "Url returned: 305 (UseProxy)");                     }
-            //         if (response.StatusCode == HttpStatusCode.Unused                      ) { printf(print_type.err, "Url returned: 306 (Unused)");                       }
-            //         if (response.StatusCode == HttpStatusCode.TemporaryRedirect           ) { printf(print_type.err, "Url returned: 307 (TemporaryRedirect)");            }
-            //         if (response.StatusCode == HttpStatusCode.RedirectKeepVerb            ) { printf(print_type.err, "Url returned: 307 (RedirectKeepVerb)");             }
-            //         if (response.StatusCode == HttpStatusCode.BadRequest                  ) { printf(print_type.err, "Url returned: 400 (BadRequest)");                   }
-            //         if (response.StatusCode == HttpStatusCode.Unauthorized                ) { printf(print_type.err, "Url returned: 401 (Unauthorized)");                 }
-            //         if (response.StatusCode == HttpStatusCode.PaymentRequired             ) { printf(print_type.err, "Url returned: 402 (PaymentRequired)");              }
-            //         if (response.StatusCode == HttpStatusCode.Forbidden                   ) { printf(print_type.err, "Url returned: 403 (Forbidden)");                    }
-            //         if (response.StatusCode == HttpStatusCode.NotFound                    ) { printf(print_type.err, "Url returned: 404 (NotFound)");                     }
-            //         if (response.StatusCode == HttpStatusCode.MethodNotAllowed            ) { printf(print_type.err, "Url returned: 405 (MethodNotAllowed)");             }
-            //         if (response.StatusCode == HttpStatusCode.NotAcceptable               ) { printf(print_type.err, "Url returned: 406 (NotAcceptable)");                }
-            //         if (response.StatusCode == HttpStatusCode.ProxyAuthenticationRequired ) { printf(print_type.err, "Url returned: 407 (ProxyAuthenticationRequired)");  }
-            //         if (response.StatusCode == HttpStatusCode.RequestTimeout              ) { printf(print_type.err, "Url returned: 408 (RequestTimeout)");               }
-            //         if (response.StatusCode == HttpStatusCode.Conflict                    ) { printf(print_type.err, "Url returned: 409 (Conflict)");                     }
-            //         if (response.StatusCode == HttpStatusCode.Gone                        ) { printf(print_type.err, "Url returned: 410 (Gone)");                         }
-            //         if (response.StatusCode == HttpStatusCode.LengthRequired              ) { printf(print_type.err, "Url returned: 411 (LengthRequired)");               }
-            //         if (response.StatusCode == HttpStatusCode.PreconditionFailed          ) { printf(print_type.err, "Url returned: 412 (PreconditionFailed)");           }
-            //         if (response.StatusCode == HttpStatusCode.RequestEntityTooLarge       ) { printf(print_type.err, "Url returned: 413 (RequestEntityTooLarge)");        }
-            //         if (response.StatusCode == HttpStatusCode.RequestUriTooLong           ) { printf(print_type.err, "Url returned: 414 (RequestUriTooLong)");            }
-            //         if (response.StatusCode == HttpStatusCode.UnsupportedMediaType        ) { printf(print_type.err, "Url returned: 415 (UnsupportedMediaType)");         }
-            //         if (response.StatusCode == HttpStatusCode.RequestedRangeNotSatisfiable) { printf(print_type.err, "Url returned: 416 (RequestedRangeNotSatisfiable)"); }
-            //         if (response.StatusCode == HttpStatusCode.ExpectationFailed           ) { printf(print_type.err, "Url returned: 417 (ExpectationFailed)");            }
-            //         if (response.StatusCode == HttpStatusCode.UpgradeRequired             ) { printf(print_type.err, "Url returned: 426 (UpgradeRequired)");              }
-            //         if (response.StatusCode == HttpStatusCode.InternalServerError         ) { printf(print_type.err, "Url returned: 500 (InternalServerError)");          }
-            //         if (response.StatusCode == HttpStatusCode.NotImplemented              ) { printf(print_type.err, "Url returned: 501 (NotImplemented)");               }
-            //         if (response.StatusCode == HttpStatusCode.BadGateway                  ) { printf(print_type.err, "Url returned: 502 (BadGateway)");                   }
-            //         if (response.StatusCode == HttpStatusCode.ServiceUnavailable          ) { printf(print_type.err, "Url returned: 503 (ServiceUnavailable)");           }
-            //         if (response.StatusCode == HttpStatusCode.GatewayTimeout              ) { printf(print_type.err, "Url returned: 504 (GatewayTimeout)");               }
-            //         if (response.StatusCode == HttpStatusCode.HttpVersionNotSupported     ) { printf(print_type.err, "Url returned: 505 (HttpVersionNotSupported)");      }
-            // 
-            //         response.Close();
-            //     }
-            //     catch (WebException e) { printf(print_type.err, "ERR[WebException] " + e.Message); }
-            // }
+            if (string.IsNullOrEmpty(input)) { print(print_type.cer, "input is blank." + input, true, true); return 0; }
             
-            return true;
+            bool isURL = false;
+            bool isFile = false;
+            if (File.Exists(input)) { isFile = true; }
+            if (Uri.IsWellFormedUriString(input, UriKind.Absolute)) { isURL = true; }
+            
+            if (!isURL && !isFile)
+            {
+                print(print_type.cer, "not an url or file: " + input, true, true);
+                return 0;
+            }
+            else if (isURL) { return 1; }
+            else if (isFile) { return 2; }
+
+            return 0;
         }
         
         private static int wc_dl(string url_)
@@ -688,7 +628,7 @@ namespace webgrab
             return 0;
         }
 
-        private static List<string> get_html_all(Uri URL, byte[] html)
+        private static List<string> get_html_all(string URL, byte[] html)
         {
             //GET ALL CHARS
             char[] htmlChars = System.Text.Encoding.Default.GetString(html).ToArray();
@@ -712,13 +652,18 @@ namespace webgrab
                 string item = System.Web.HttpUtility.HtmlDecode(url);
                 if (Uri.IsWellFormedUriString(item, UriKind.Absolute)) { rooted_urls.Add(item); continue; }
 
-                if (item.StartsWith("//")) { rooted_urls.Add(URL.ToString().Split(':')[0] + ":" + item); } //add http or https
-                else if (item.StartsWith("/")) //add website name
+                if (URL != null)
                 {
-                    if (URL.ToString().EndsWith("/")) { rooted_urls.Add(URL.ToString() + item); }
-                    else { rooted_urls.Add(URL.ToString() + "/" + item); }
+                    if (item.StartsWith("//")) { rooted_urls.Add(URL.Split(':')[0] + ":" + item); continue; } //add http or https
+                    else if (item.StartsWith("/")) //add website name
+                    {
+                        if (URL.EndsWith("/")) { rooted_urls.Add(URL + item); }
+                        else                   { rooted_urls.Add(URL + "/" + item); }
+                        continue;
+                    }
                 }
-                else { rooted_urls.Add(item); } //add junk
+
+                rooted_urls.Add(item);
             }
 
             //ROOT
@@ -791,62 +736,36 @@ namespace webgrab
 
             return links;
         }
-
-        private static int lst_gen(string[] args)
-        {
-            if (args.Length == 4)
-            {
-                if (!int.TryParse(args[2], out int out_1))
-                {
-                    print(print_type.err, "not a number: " + args[2]);
-                    return 1;
-                }
-                if (!int.TryParse(args[3], out int out_2))
-                {
-                    print(print_type.err, "not a number: " + args[3]);
-                    return 1;
-                }
-
-                for (int i = out_1; i <= out_2; i++)
-                {
-                    print(print_type.def, args[1].Replace("$$$$$", i.ToString()));
-                }
-
-                return 0;
-            }
-            else
-            {
-                print(print_type.err, "webgrab.exe --list \"http://some_url.com/page/$$$$$\" \"from(num)\" \"to(num)\"");
-                return 1;
-            }
-        }
-        private static int out_urls(string[] args)
+        
+        private static int RunOption_outUrls(string[] args)
         {
             if (args.Length >= 2)
             {
                 ///STANDARD SETUP
                 if (args.Length == 3) { get_options(args[2]); } //get options
-                string URL_ = args[1];
-                if (!url_is_valid_main(URL_)) { return 1; } //CHECK URL
-                Uri URL = new Uri(URL_);
+                string input = args[1];
+
                 byte[] html = null;
+                int check = check_URLorFILE(input);
+                switch (check)
+                {
+                    case 0:
+                    default: return 1;
+
+                    case 1:
+                        {
+                            try { html = wc.DownloadData(new Uri(input)); }
+                            catch (System.Net.WebException e)       { print(print_type.cer, "ERR[WebException] "           + e.Message, true, true); return returnStatusCode(e); }
+                            catch (System.ArgumentNullException e)  { print(print_type.cer, "ERR[ArgumentNullException] "  + e.Message, true, true); return e.HResult;           }
+                            catch (System.NullReferenceException e) { print(print_type.cer, "ERR[NullReferenceException] " + e.Message, true, true); return e.HResult;           }
+                            catch (System.Exception e)              { print(print_type.cer, "ERR[UNK] "                    + e.Message, true, true); return e.HResult;           }
+                            break;
+                        }
+                    case 2: html = File.ReadAllBytes(input); break;
+                }
                 
-                try
-                {
-                    html = wc.DownloadData(URL); //DOWNLOAD
-                }
-                catch (System.Net.WebException e)
-                {
-                    print(print_type.err, "ERR[WebException] " + e.Message, true, true);
-
-                    return returnStatusCode(e);
-                }
-                catch (System.ArgumentNullException e)  { print(print_type.err, "ERR[ArgumentNullException] "  + e.Message, true, true); return e.HResult; }
-                catch (System.NullReferenceException e) { print(print_type.err, "ERR[NullReferenceException] " + e.Message, true, true); return e.HResult; }
-                catch (System.Exception e)              { print(print_type.err, "ERR[UNK] "                    + e.Message, true, true); return e.HResult; }
-
                 //HTML SCAN
-                List<string> html_all = get_html_all(URL, html);
+                List<string> html_all = get_html_all(check == 1 ? input : null, html);
                 List<string> final = new List<string>();
 
                 int longest_numb = 3, longest_url = 3;
@@ -872,43 +791,48 @@ namespace webgrab
             }
             else
             {
-                print(print_type.err, "webgrab.exe --out \"URL\" \"switch1,sw2,sw3,sw4,...\"", true, true);
+                print(print_type.cer, "webgrab.exe --out \"URL\" \"switch1,sw2,sw3,sw4,...\"", true, true);
                 return 1;
             }
 
             return 0;
         }
-        private static int test_website(string[] args)
+        private static int RunOption_testWebsite(string[] args)
         {
             if (args.Length >= 2)
             {
                 ///STANDARD SETUP
                 if (args.Length == 3) { get_options(args[2]); } //get options
-                string URL_ = args[1];
-                if (!url_is_valid_main(URL_)) { return 1; } //CHECK URL
-                Uri URL = new Uri(URL_);
-                byte[] html = null;
+                string input = args[1];
 
                 print(print_type.top, "===[ TESTING WEBSITE ]");
-                try
-                {
-                    html = wc.DownloadData(URL); //DOWNLOAD
-                }
-                catch (System.Net.WebException e)
-                {
-                    print(print_type.err, "ERR[WebException] " + e.Message, true, true);
 
-                    return returnStatusCode(e);
+                byte[] html = null;
+                int check = check_URLorFILE(input);
+                switch (check)
+                {
+                    case 0:
+                    default: return 1;
+
+                    case 1:
+                        {
+                            try { html = wc.DownloadData(new Uri(input)); }
+                            catch (System.Net.WebException e)       { print(print_type.cer, "ERR[WebException] "           + e.Message, true, true); return returnStatusCode(e); }
+                            catch (System.ArgumentNullException e)  { print(print_type.cer, "ERR[ArgumentNullException] "  + e.Message, true, true); return e.HResult;           }
+                            catch (System.NullReferenceException e) { print(print_type.cer, "ERR[NullReferenceException] " + e.Message, true, true); return e.HResult;           }
+                            catch (System.Exception e)              { print(print_type.cer, "ERR[UNK] "                    + e.Message, true, true); return e.HResult;           }
+                            break;
+                        }
+                    case 2: html = File.ReadAllBytes(input); break;
                 }
-                catch (System.ArgumentNullException e)  { print(print_type.err, "ERR[ArgumentNullException] "  + e.Message, true, true); return e.HResult; }
-                catch (System.NullReferenceException e) { print(print_type.err, "ERR[NullReferenceException] " + e.Message, true, true); return e.HResult; }
-                catch (System.Exception e)              { print(print_type.err, "ERR[UNK] "                    + e.Message, true, true); return e.HResult; }
+
+                
                 print(print_type.pri, "html size (DLED)..: " + ROund(html.Length) + " (" + html.Length + " bytes)", true, true);
 
                 //HTML SCAN
                 print(print_type.inf, "title from html...: " + get_html_title(html), true, true);
 
-                List<string> html_all = get_html_all(URL, html);
+                List<string> html_all = get_html_all(check == 1 ? input : null, html);
                 print(print_type.inf, "total items.......: " + count_total, true ,true);
                 
                 foreach (string str in html_all) { url_is_valid(str); /*get vars*/ }
@@ -918,13 +842,13 @@ namespace webgrab
             }
             else
             {
-                print(print_type.err, "webgrab.exe --test \"URL\" \"switch1,sw2,sw3,sw4,...\"");
+                print(print_type.cer, "webgrab.exe --test \"URL\" \"switch1,sw2,sw3,sw4,...\"");
                 return 1;
             }
 
             return 0;
         }
-        private static int read(string[] args)
+        private static int RunOption_read(string[] args)
         {
             if (args.Length >= 2)
             {
@@ -962,11 +886,11 @@ namespace webgrab
             }
             else
             {
-                print(print_type.err, "webgrab.exe --read \"file_with_urls.txt\" \"switch1,sw2,sw3,sw4,...\"");
+                print(print_type.cer, "webgrab.exe --read \"file_with_urls.txt\" \"switch1,sw2,sw3,sw4,...\"");
                 return 1;
             }
         }
-        private static int listen(string[] args)
+        private static int RunOption_listen(string[] args)
         {
             if (args.Length == 2) { get_options(args[1]); }
 
@@ -1090,14 +1014,18 @@ namespace webgrab
         }
         private static int returnStatusCode(System.Net.WebException e)
         {
-            //return web status error code if present
-            if (e.Status == WebExceptionStatus.ProtocolError)
-            {
-                HttpWebResponse response = e.Response as HttpWebResponse;
-                if (response != null) { return int.Parse(response.StatusCode.ToString()); }
-            }
+            HttpWebResponse response = (HttpWebResponse)e.Response;
 
-            return e.HResult;
+            HttpStatusCode statusCode = response.StatusCode;
+            Stream dataStream = response.GetResponseStream();
+            StreamReader reader = new StreamReader(dataStream);
+            string sResponse = reader.ReadToEnd();
+
+            // //DEBUG
+            // Console.WriteLine(sResponse); //html
+            // Console.WriteLine("Response Code: " + (int)statusCode + " - " + statusCode.ToString()); //e.g. "Response Code: 404 - NotFound"
+
+            return (int)statusCode;
         }
         private static bool compare(string str1, string str2, bool ignore_case = false, bool ignore_ext = false)
         {
