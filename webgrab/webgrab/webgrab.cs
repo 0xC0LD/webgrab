@@ -269,7 +269,7 @@ namespace webgrab
             print(print_type.top, " +===[ ABOUT ]");
             print(print_type.top, " |", false); print(print_type.inf, " ABOUT....: web page file scanner / downloader");
             print(print_type.top, " |", false); print(print_type.inf, " BUILT IN.: C# .NET 4.6.1");
-            print(print_type.top, " |", false); print(print_type.inf, " Version..: 73");
+            print(print_type.top, " |", false); print(print_type.inf, " Version..: 74");
             print(print_type.top, " |", false); print(print_type.inf, " Author...: 0xC0LD");
             print(print_type.top, " |", false); print(print_type.inf, " USAGE....: webgrab.exe <webpage url / file.html / RO> <switch1,sw2,sw3,sw4,...>");
             print(print_type.def, "");
@@ -872,6 +872,7 @@ namespace webgrab
                 catch (System.Security.SecurityException e)    { print(print_type.err, "ERR[SecurityException] "           + e.Message); return e.HResult; }
 
                 print(print_type.inf, "total items....: " + links_from_file.Length);
+                count_total = links_from_file.Length;
                 List<string> accepted_items = new List<string>();
                 foreach (string str in links_from_file) { if (url_is_valid(str)) { accepted_items.Add(str); } }
                 print(print_type.inf, "accepted items.: " + accepted_items.Count);
