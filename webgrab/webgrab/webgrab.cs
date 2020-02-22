@@ -269,7 +269,7 @@ namespace webgrab
             print(print_type.top, " +===[ ABOUT ]");
             print(print_type.top, " |", false); print(print_type.inf, " ABOUT....: web page file scanner / downloader");
             print(print_type.top, " |", false); print(print_type.inf, " BUILT IN.: C# .NET 4.6.1");
-            print(print_type.top, " |", false); print(print_type.inf, " Version..: 74");
+            print(print_type.top, " |", false); print(print_type.inf, " Version..: 75");
             print(print_type.top, " |", false); print(print_type.inf, " Author...: 0xC0LD");
             print(print_type.top, " |", false); print(print_type.inf, " USAGE....: webgrab.exe <webpage url / file.html / RO> <switch1,sw2,sw3,sw4,...>");
             print(print_type.def, "");
@@ -569,14 +569,14 @@ namespace webgrab
                         //GET NEW FILENAME
                         FileInfo fff = new FileInfo(filename); //get file info for our path
                         int c = 1; //++
-                        filename = fff.Name.Replace(fff.Extension, "") + " [" + c + "]" + fff.Extension;
+                        filename = Path.GetFileNameWithoutExtension(fff.Name) + " [" + c + "]" + fff.Extension;
                         //if file exists add a number to it
 
                         //keep adding the number until the file doesn't exist
                         while (File.Exists(filename))
                         {
                             c++;
-                            filename = fff.Name.Replace(fff.Extension, "") + " [" + c + "]" + fff.Extension;
+                            filename = Path.GetFileNameWithoutExtension(fff.Name) + " [" + c + "]" + fff.Extension;
                         }
 
                         count_dupes++;
@@ -617,12 +617,12 @@ namespace webgrab
                 //add to size
                 count_dled_bytes = count_dled_bytes + fi.Length;
 
-                             print(print_type.pri, "DLED",                                                false);
-                if (COUNT) { print(print_type.pri, "[" + count_dled + "]",                                false); }
-                             print(print_type.pri, ": " + url_ + " (" + filename + ")",                   false);
-                             print(print_type.def, " ",                                                   false);
-                             print(print_type.inf, "(" + ROund(fi.Length) + "(" + fi.Length + " bytes))", false);
-                             print(print_type.def, " ",                                                   true);
+                             print(print_type.pri, "DLED",                                                 false);
+                if (COUNT) { print(print_type.pri, "[" + count_dled + "]",                                 false); }
+                             print(print_type.pri, ": " + url_ + " (" + filename + ")",                    false);
+                             print(print_type.def, " ",                                                    false);
+                             print(print_type.inf, "(" + ROund(fi.Length) + " (" + fi.Length + " bytes))", false);
+                             print(print_type.def, " ",                                                    true);
             }
             catch (Exception) { return 1; } //other exception
             return 0;
@@ -915,7 +915,7 @@ namespace webgrab
         //OTHER FUNCTIONS
         private static string get_html_title(byte[] html)
         {
-            return System.Net.WebUtility.HtmlDecode(get_string_in_between("<title>", "</title>", System.Text.Encoding.Default.GetString(html), false, false));
+            return System.Net.WebUtility.HtmlDecode(get_string_in_between("<title>", "</title>", System.Text.Encoding.ASCII.GetString(html), false, false));
         }
         private static string get_string_in_between(string strBegin, string strEnd, string strSource, bool includeBegin, bool includeEnd)
         {
@@ -948,42 +948,16 @@ namespace webgrab
 
             return result[0];
         }
-        private static string ROund(double bytes)
+        private static string ROund(double len)
         {
-            // 1 Byte = 8 Bit
-            // 1 Kilobyte = 1024 Bytes
-            // 1 Megabyte = 1048576 Bytes
-            // 1 Gigabyte = 1073741824 Bytes
-            // 1 Terabyte = 1099511627776 Bytes
-
-            string num_double_string = bytes + " B";
-
-            if (bytes > 1099511627776) //TB
+            string[] sizes = { "B", "KB", "MB", "GB", "TB" };
+            int order = 0;
+            while (len >= 1024 && order < sizes.Length - 1)
             {
-                bytes = bytes / 1099511627776;
-                num_double_string = Math.Round(bytes, 2) + " TB";
+                order++;
+                len = len / 1024;
             }
-            else if (bytes > 1073741824) //GB
-            {
-                bytes = bytes / 1073741824;
-                num_double_string = Math.Round(bytes, 2) + " GB";
-            }
-            else if (bytes > 1048576) //MB
-            {
-                bytes = bytes / 1048576;
-                num_double_string = Math.Round(bytes, 2) + " MB";
-            }
-            else if (bytes > 1024) //KB
-            {
-                bytes = bytes / 1024;
-                num_double_string = Math.Round(bytes, 2) + " KB";
-            }
-            else
-            {
-                num_double_string = bytes + " B";
-            }
-
-            return num_double_string;
+            return string.Format("{0:0.##} {1}", len, sizes[order]);
         }
         private static string time()
         {
